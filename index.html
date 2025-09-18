@@ -781,7 +781,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <br><br>
                 <button style="background-color: rgb(65, 65, 65);" onclick="borrarHorasMesHastaHoy()">📜 Borrar reservas antiguas del MES</button>
                 <br><br>
-                <button style="background: brown; color: white;" onclick="mostrarBotonesX();cerrarModal('modal-control');">❌ Eliminar solo 1 reserva </button>
+                <button style="background: brown; color: white;" onclick="mostrarBotonBorrar();mostrarBotonesX();cerrarModal('modal-control');">❌ Eliminar reservas a elección </button>
                 <br><br>
                 <button style="font-size: 150%; background-color: red;" onclick="cerrarModal('modal-control')">Cerrar Panel de Control</button>
             </div>
@@ -916,10 +916,92 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById("botonescierraxdiv").style.display = 'none';
             }
 
-</script>
 
+// Asegúrate de que este UID es el de tu cuenta de administrador
+const UID_ADMINISTRADOR = "TU_UID_DE_ADMINISTRADOR"; 
+
+// Usa el evento 'onAuthStateChanged' para saber si el usuario está logueado
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // Si el usuario está logueado, verifica su UID
+        if (user.uid === UID_ADMINISTRADOR) {
+            // Si es el administrador, muestra el botón
+            const botonBorrar = document.getElementById("boton-listo-borrar");
+            if (botonBorrar) {
+                botonBorrar.style.display = "block";
+            }
+        }
+    } else {
+        // Si no hay usuario logueado, el botón se mantiene oculto
+        const botonBorrar = document.getElementById("boton-listo-borrar");
+        if (botonBorrar) {
+            botonBorrar.style.display = "none";
+        }
+    }
+});
+</script>
+<style>
+    #boton-listo-borrar {
+  /* Estilo básico */
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  display: none;
+
+  /* Colores */
+  color: white; /* Color del texto */
+  background-color: #ff4d4d; /* Rojo claro */
+  
+  /* Sombra para efecto 3D */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Transiciones suaves */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Efecto al pasar el cursor (hover) */
+#boton-listo-borrar:hover {
+  background-color: #e60000; /* Un rojo más oscuro */
+  transform: translateY(-2px); /* Eleva el botón ligeramente */
+}
+
+/* Efecto al hacer clic (active) */
+#boton-listo-borrar:active {
+  background-color: #b30000; /* Un rojo aún más oscuro */
+  transform: translateY(0); /* Vuelve a su posición original */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+</style>
         <h2 style="color: red !important; text-shadow: #000 1px 1px 2px;">⛔Horas Reservadas⛔</h2>
         <input style="border: 1px solid red;" type="text" id="buscadorGlobal" placeholder="Buscar... por Año, Mes o Día" />
+        <button id="boton-listo-borrar" onclick="miFuncionBorrar();ocultarBotonBorrar()">
+ Listo
+</button>
+<script>
+    function mostrarBotonBorrar() {
+    // Obtiene el elemento del botón
+    const boton = document.getElementById("boton-listo-borrar");
+    
+    // Muestra el botón
+    boton.style.display = "block"; 
+}
+
+function ocultarBotonBorrar() {
+    // Obtiene el elemento del botón
+    const boton = document.getElementById("boton-listo-borrar");
+    
+    // Oculta el botón
+    boton.style.display = "none";
+}
+     // Aquí defines la función que se ejecutará al hacer clic en el botón
+        function miFuncionBorrar() {
+            alert("¡La función de borrado se ha ejecutado!");
+        ocultarBotonesX();
+         }
+</script>
         <div id="reservas-lista"></div>
     </div>
     <style>
@@ -2362,9 +2444,22 @@ setTimeout(() => {
             botonX.className = "boton-x";
             botonX.title = "Eliminar esta hora";
             botonX.onclick = () => {
-                snapshot.ref.remove();
-                ocultarBotonesX();
-            };
+    // Obtén la clave (ID único) de la reserva
+    const reservaId = snapshot.key;
+
+    // Crea la referencia para eliminar solo esta reserva específica
+    const reservaRef = reservasRefMostrar.child(reservaId);
+
+    // Usa la referencia para eliminar
+    reservaRef.remove()
+        .then(() => {
+            console.log("Reserva eliminada con éxito.");
+        })
+        .catch((error) => {
+            console.error("Error al eliminar la reserva:", error);
+        });
+
+};
             div.appendChild(texto);
             div.appendChild(botonX);
             listaReservas.appendChild(div);
