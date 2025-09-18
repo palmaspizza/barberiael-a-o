@@ -941,27 +941,80 @@ firebase.auth().onAuthStateChanged((user) => {
 });
 </script>
 <style>
-    #boton-listo-borrar {
+#boton-listo-borrar {
   /* Estilo básico */
   font-family: Arial, sans-serif;
-  font-size: 16px;
+  font-size: 26px;
   padding: 10px 20px;
   border: none;
   cursor: pointer;
   border-radius: 5px;
+  border: solid 3px #fff;
   display: none;
 
-  /* Colores */
-  color: white; /* Color del texto */
-  background-color: #ff4d4d; /* Rojo claro */
-  
-  /* Sombra para efecto 3D */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* Colores para que resalte */
+  color: white; /* Texto blanco */
+  background-color: #e63946; /* Un rojo vibrante */
 
-  /* Transiciones suaves */
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  /* Sombra para que destaque */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+  /* Posicionamiento fijo en la página (¡con !important!) */
+  position: fixed !important; /* Fuerza la posición fija */
+  bottom: 20px; /* 20px desde la parte inferior */
+  left: 20px; /* 20px desde la parte izquierda */
+  z-index: 1000; /* Asegura que esté por encima de otros elementos */
+
+  /* Esto es CLAVE para la animación de flujo */
+  overflow: hidden;
+  position: relative;
+  
+  /* Hacemos el botón visible por defecto */
+
 }
 
+/* Efectos al pasar el cursor (hover) */
+#boton-listo-borrar:hover {
+  background-color: #d62828; /* Rojo más oscuro al pasar el cursor */
+  transform: translateY(-3px); /* Se eleva ligeramente */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Efectos al hacer clic (active) */
+#boton-listo-borrar:active {
+  transform: translateY(0); /* Vuelve a su posición original */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  background-color: #b81c1c; /* Un rojo aún más oscuro al presionar */
+}
+
+/* Pseudo-elemento para el efecto de brillo */
+#boton-listo-borrar::before {
+  content: ''; /* Propiedad obligatoria */
+  position: absolute;
+  top: 0;
+  left: -75%; /* Inicia fuera del botón */
+  width: 50%; /* Ancho del "brillo" */
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg); /* Le da un ángulo al brillo */
+  pointer-events: none; /* Asegura que el pseudo-elemento no bloquee el clic */
+  animation: shine 2s infinite linear; /* Aplica la animación constante */
+}
+
+/* Define la animación "shine" */
+@keyframes shine {
+  0% {
+    left: -75%;
+  }
+  100% {
+    left: 125%; /* Termina fuera del botón */
+  }
+}
 /* Efecto al pasar el cursor (hover) */
 #boton-listo-borrar:hover {
   background-color: #e60000; /* Un rojo más oscuro */
