@@ -14,6 +14,12 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<!-- Firebase App (core) -->
+<script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+
+<!-- Firebase Messaging -->
+<script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-messaging.js"></script>
+
 </head>
 <body>
     
@@ -45,11 +51,49 @@
                 <button id="mesSiguiente" class="botonMes">→</button>
             </div>
         </div>
-        
+        <button id="solicitar" hidden>Solicitar notificaciones</button>
+<script>
+  async function enviar() {
+    try {
+      const response = await window.fetch('http://localhost:3000/enviar-notificaciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo: 'Hola', mensaje: 'Mensaje desde el cliente' })
+      });
+
+      const result = await response.text();
+      console.log('Respuesta del servidor:', result);
+    } catch (error) {
+      console.error('Error al enviar la notificación:', error);
+    }
+  }
+</script>
+
+<button onclick="enviar()" hidden>Enviar notificación</button>
+
+
         Selecciona un día
       <div class="dias-semana"></div>
 <div id="cuadroCalendario"></div>
     <script>
+document.getElementById('solicitar').addEventListener('click', async () => {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      const token = await messaging.getToken({ vapidKey: 'LPiNDM_XNqEyUax9FouVf80pSRw0RKakQcr3uWolXio' });
+      console.log('Token:', token);
+
+      // Aquí puedes guardar el token en tu base de datos para enviarle notificaciones después
+      await fetch('/guardar-token', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  } catch (err) {
+    console.error('Error al solicitar permiso:', err);
+  }
+});
 
 
 
@@ -82,6 +126,100 @@
 
 
         // Tu función principal para generar los días del mes
+
+        function generarCuadroCalendario() {
+
+            const mesStr = `${fechaActualCalendario.getFullYear()}-${String(fechaActualCalendario.getMonth() + 1).padStart(2, "0")}`;
+
+            cuadroCalendario.innerHTML = "";
+
+            const [anio, mes] = mesStr.split("-");
+
+            const fechaInicio = new Date(anio, mes - 1, 1);
+
+            const primerDiaSemana = fechaInicio.getDay();
+
+            const totalDias = new Date(anio, mes, 0).getDate();
+
+            const offset = primerDiaSemana === 0 ? 6 : primerDiaSemana - 1;
+
+
+
+            for (let i = 0; i < offset; i++) {
+
+                const vacio = document.createElement("div");
+
+                cuadroCalendario.appendChild(vacio);
+
+            }
+
+
+
+            for (let dia = 1; dia <= totalDias; dia++) {
+
+                const fechaActual = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+
+                const celda = document.createElement("div");
+
+                celda.classList.add("diaCalendario");
+
+                celda.textContent = dia;
+
+
+
+                const horasReservadas = reservasPorDia[fechaActual] || [];
+
+                const horarioDelDia = horariosPersonalizados[fechaActual] || horarioSemana;
+
+                const estaBloqueado = diasBloqueados.includes(fechaActual) || horarioDelDia.length === 0;
+
+                const estaOcupado = horasReservadas.length >= horarioDelDia.length;
+
+
+
+                if (estaBloqueado) {
+
+                    celda.classList.add("diaBloqueado");
+
+                    celda.title = "Día bloqueado por el administrador";
+
+                } else if (estaOcupado) {
+
+                    celda.classList.add("diaOcupado");
+
+                    celda.title = "Día con todas las horas reservadas";
+
+                } else {
+
+                    celda.classList.add("diaLibre");
+
+                    celda.title = "Día disponible";
+
+                }
+
+
+
+                celda.onclick = () => {
+
+                    // ... (tu lógica de clic, que no se modificó) ...
+
+                };
+
+                
+
+                if (!modoBloqueoDias && estaBloqueado) {
+
+                    celda.style.pointerEvents = "none";
+
+                }
+
+
+
+                cuadroCalendario.appendChild(celda);
+
+            }
+
+        }
 
 
 
@@ -580,92 +718,77 @@ document.addEventListener('DOMContentLoaded', function() {
     <div id="cuadroCalendario"></div>
 
     <script>
-     function generarCuadroCalendario() {
-    const mesStr = `${fechaActualCalendario.getFullYear()}-${String(fechaActualCalendario.getMonth() + 1).padStart(2, "0")}`;
-    const cuadroCalendario = document.getElementById("cuadroCalendario");
-    cuadroCalendario.innerHTML = "";
-    const [anio, mes] = mesStr.split("-");
-    const fechaInicio = new Date(anio, mes - 1, 1);
-    const primerDiaSemana = fechaInicio.getDay();
-    const totalDias = new Date(anio, mes, 0).getDate();
-    const offset = primerDiaSemana === 0 ? 6 : primerDiaSemana - 1;
+        function generarCuadroCalendario() {
+            const mesStr = `${fechaActualCalendario.getFullYear()}-${String(fechaActualCalendario.getMonth() + 1).padStart(2, "0")}`;
+            const cuadroCalendario = document.getElementById("cuadroCalendario");
+            cuadroCalendario.innerHTML = "";
+            const [anio, mes] = mesStr.split("-");
+            const fechaInicio = new Date(anio, mes - 1, 1);
+            const primerDiaSemana = fechaInicio.getDay();
+            const totalDias = new Date(anio, mes, 0).getDate();
+            const offset = primerDiaSemana === 0 ? 6 : primerDiaSemana - 1;
 
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
 
-    // 🕒 Horario predeterminado para martes
-    const horarioDIAESPECIAL = ["09:00", "10:00", "11:00", "12:00"]; // Ajusta según tu necesidad
-
-    for (let i = 0; i < offset; i++) {
-        const vacio = document.createElement("div");
-        cuadroCalendario.appendChild(vacio);
-    }
-
-    for (let dia = 1; dia <= totalDias; dia++) {
-        const fechaActual = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
-        const celda = document.createElement("div");
-        celda.classList.add("diaCalendario");
-        celda.textContent = dia;
-
-        const fechaCelda = new Date(anio, mes - 1, dia);
-        const diaSemana = fechaCelda.getDay();
-
-        const horasReservadas = reservasPorDia[fechaActual] || [];
-
-
-        
-        // 🧠 Lógica para asignar horario del día
-        let horarioDelDia;
-        if (horariosPersonalizados[fechaActual]) {
-            horarioDelDia = horariosPersonalizados[fechaActual];
-        } else if (diaSemana === 2) { // 2 = martes
-            horarioDelDia = horarioDIAESPECIAL;
-        } else {
-            horarioDelDia = horarioSemana;
-        }
-
-        const estaBloqueado = diasBloqueados.includes(fechaActual) || horarioDelDia.length === 0 || diasDeLaSemanaBloqueados.includes(diaSemana);
-        const estaOcupado = horasReservadas.length >= horarioDelDia.length;
-        const diaPasado = fechaCelda < hoy;
-
-        if (diaPasado) {
-            celda.classList.add("diaPasado");
-            celda.title = "Este día ya ha pasado";
-        } else if (estaBloqueado) {
-            celda.classList.add("diaBloqueado");
-            celda.title = "Día bloqueado por el administrador";
-        } else if (estaOcupado) {
-            celda.classList.add("diaOcupado");
-            celda.title = "Día con todas las horas reservadas";
-        } else {
-            celda.classList.add("diaLibre");
-            celda.title = "Día disponible";
-        }
-
-        if (diaPasado || (!modoBloqueoDias && estaBloqueado)) {
-            celda.style.pointerEvents = "none";
-        }
-
-        celda.onclick = () => {
-            if (diaPasado) return;
-
-            if (modoGestionHorarios) {
-                fechaSeleccionadaParaConfigurar = fechaActual;
-                abrirVentanaConfiguracionHorarios();
-            } else if (modoBloqueoDias) {
-                // Lógica de bloqueo
-            } else {
-                if (!estaBloqueado) {
-                    fechaInput.value = fechaActual;
-                    abrirVentanaHorarios(fechaActual);
-                }
+            for (let i = 0; i < offset; i++) {
+                const vacio = document.createElement("div");
+                cuadroCalendario.appendChild(vacio);
             }
-        };
-        cuadroCalendario.appendChild(celda);
-    }
-}
 
+            for (let dia = 1; dia <= totalDias; dia++) {
+                const fechaActual = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+                const celda = document.createElement("div");
+                celda.classList.add("diaCalendario");
+                celda.textContent = dia;
 
+                const fechaCelda = new Date(anio, mes - 1, dia);
+                const diaSemana = fechaCelda.getDay();
+
+                const horasReservadas = reservasPorDia[fechaActual] || [];
+                const horarioDelDia = horariosPersonalizados[fechaActual] || horarioSemana;
+                const estaBloqueado = diasBloqueados.includes(fechaActual) || horarioDelDia.length === 0 || diasDeLaSemanaBloqueados.includes(diaSemana);
+                const estaOcupado = horasReservadas.length >= horarioDelDia.length;
+                const diaPasado = fechaCelda < hoy;
+
+                if (diaPasado) {
+                    celda.classList.add("diaPasado");
+                    celda.title = "Este día ya ha pasado";
+                } else if (estaBloqueado) {
+                    celda.classList.add("diaBloqueado");
+                    celda.title = "Día bloqueado por el administrador";
+                } else if (estaOcupado) {
+                    celda.classList.add("diaOcupado");
+                    celda.title = "Día con todas las horas reservadas";
+                } else {
+                    celda.classList.add("diaLibre");
+                    celda.title = "Día disponible";
+                }
+
+                if (diaPasado || (!modoBloqueoDias && estaBloqueado)) {
+                    celda.style.pointerEvents = "none";
+                }
+
+                celda.onclick = () => {
+                    if (diaPasado) return;
+
+                    if (modoGestionHorarios) {
+                        fechaSeleccionadaParaConfigurar = fechaActual;
+                        abrirVentanaConfiguracionHorarios();
+                    } else if (modoBloqueoDias) {
+                        // Lógica de bloqueo
+                    } else {
+                        if (!estaBloqueado) {
+                            fechaInput.value = fechaActual;
+                            abrirVentanaHorarios(fechaActual);
+                        }
+                    }
+                };
+                cuadroCalendario.appendChild(celda);
+            }
+        }
+
+ 
         
         function cerrarDiaDeLaSemana(dia) {
             if (!diasDeLaSemanaBloqueados.includes(dia)) {
@@ -725,17 +848,13 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="modal-configuracion-horarios" class="ventana-secreta fantasma">
             <div class="caja-misteriosa">
                 <h3 id="titulo-config-horarios">Configurar Horario</h3>
-                <p>🟩 Dejar Hora Disponible</p><br>
-                <p>🟥 Dejar Hora NO Disponible</p>
-                <button onclick="document.getElementById('boton-aplicar-a-todos').innerHTML = '✅ Aplicado a todos los ' + diaSemanaTexto;" id="boton-aplicar-a-todos" style="background-color: purple; border: 2px solid black;">
-    Aplicar horario a todos los <span id="nombre-dia-semana"></span>
-</button>
-
+                <p>🟩 Hora Disponible</p><br>
+                <p>🟥 Hora NO Disponible</p>
                 <p id="fecha-config-horarios"></p>
                 <br>
                 <div id="botones-horarios-predeterminados" style="display: flex; flex-direction: column; gap: 5px;">
 
-                    <button hidden  id="boton-horario-sabado" style="background-color: rgb(0, 255, 0)red; border: 2px solid black;">Horario de Sábado</button>
+                    <button  id="boton-horario-sabado" style="background-color: rgb(0, 255, 0); border: 2px solid black;">Horario de Sábado</button>
                     <button hidden id="boton-horario-cerrado">Día Cerrado</button>
                 </div>
                 <hr>
@@ -1226,7 +1345,7 @@ text-shadow: #000 1px 1px 2px;
 /* Fondo general */
 body {
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: poppins;
   background: linear-gradient(to bottom, #111, #222);
   color: #fff;
 }
@@ -1378,7 +1497,7 @@ button {
 /* Logo */
 #logo, #logo-cerrado {
   border-radius: 10px;
-  box-shadow: 0 0 10px green  ;
+  box-shadow: 0 0 10px green;
 }
 
 /* Botón de calendario */
@@ -1958,7 +2077,77 @@ img {
     gap: 6px;
     /* ... (otros estilos) ... */
 }</style>
+<script>
+            importScripts('https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/10.5.0/firebase-messaging.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyC39rqs-jCRD9BBNkEO4XhtFElIoZh-qJs",
+  authDomain: "palmaxd.firebaseapp.com",
+  projectId: "palmaxd",
+  messagingSenderId: "527831930817",
+  appId: "1:527831930817:web:4fb627483cefee87d4c140"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(payload => {
+  self.registration.showNotification(payload.notification.title, {
+    body: payload.notification.body,
+    icon: '/icon.png'
+  });
+});
+
+</script>
+<script src="app.js"></script>
+<script src="server.js"></script>
+<script>
+
+// Registrar el Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(reg => {
+      console.log('Service Worker registrado');
+    })
+    .catch(err => {
+      console.error('Error al registrar el Service Worker:', err);
+    });
+}
+
+// Solicitar permiso y guardar token
+document.getElementById('solicitar').addEventListener('click', async () => {
+  try {
+    const permiso = await Notification.requestPermission();
+    if (permiso === 'granted') {
+      const token = await messaging.getToken({ vapidKey: 'LPiNDM_XNqEyUax9FouVf80pSRw0RKakQcr3uWolXio' }); // reemplaza con tu VAPID
+      console.log('Token:', token);
+
+      await fetch('http://localhost:3000/guardar-token', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  } catch (err) {
+    console.error('Error al solicitar notificaciones:', err);
+  }
+});
+
+// Simular reserva y enviar notificación
+document.getElementById('reservar').addEventListener('click', async () => {
+  await fetch('http://localhost:3000/enviar-notificaciones', {
+    method: 'POST',
+    body: JSON.stringify({
+      titulo: 'Nueva reserva',
+      mensaje: 'Se ha confirmado una nueva reserva en la barbería 💈'
+    }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+});
+
+</script>
     <script>
+
   // Inicializar Firebase
 
         const firebaseConfig = {
@@ -2002,7 +2191,7 @@ img {
         let fechaActualCalendario = new Date();
         let fechaSeleccionadaParaConfigurar = "";
 // CAMBIAR HORARIO
-        const horarioSemana = ["11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
+        const horarioSemana = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
         const horarioSabado = ["09:00", "09:30"];
         const bloquesBase = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
@@ -2052,7 +2241,98 @@ img {
 
   
     
-  
+     function generarCuadroCalendario() {
+    const mesStr = `${fechaActualCalendario.getFullYear()}-${String(fechaActualCalendario.getMonth() + 1).padStart(2, "0")}`;
+    cuadroCalendario.innerHTML = "";
+    const [anio, mes] = mesStr.split("-");
+    const fechaInicio = new Date(anio, mes - 1, 1);
+    const primerDiaSemana = fechaInicio.getDay();
+    const totalDias = new Date(anio, mes, 0).getDate();
+    const offset = primerDiaSemana === 0 ? 6 : primerDiaSemana - 1;
+
+    // Obtener la fecha actual para la comparación
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Establecer la hora a 00:00:00 para una comparación precisa
+
+    for (let i = 0; i < offset; i++) {
+        const vacio = document.createElement("div");
+        cuadroCalendario.appendChild(vacio);
+    }
+
+    for (let dia = 1; dia <= totalDias; dia++) {
+        const fechaActual = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+        const celda = document.createElement("div");
+        celda.classList.add("diaCalendario");
+        celda.textContent = dia;
+
+        const horasReservadas = reservasPorDia[fechaActual] || [];
+        const horarioDelDia = horariosPersonalizados[fechaActual] || horarioSemana;
+        // Dentro de la función generarCuadroCalendario()
+// ...
+
+const fechaCelda = new Date(anio, mes - 1, dia);
+const diaSemana = fechaCelda.getDay(); // Esto obtiene el día de la semana (0=Domingo, 1=Lunes, etc.)
+
+// Modifique la línea siguiente:
+const estaBloqueado = diasBloqueados.includes(fechaActual) || horarioDelDia.length === 0 || diasDeLaSemanaBloqueados.includes(diaSemana);
+
+// ...
+        const estaOcupado = horasReservadas.length >= horarioDelDia.length;
+
+        // **NUEVA LÓGICA:** Verificar si el día ya pasó
+
+        const diaPasado = fechaCelda < hoy;
+
+        // Modificar las clases para el estado del día
+        if (diaPasado) {
+            celda.classList.add("diaPasado");
+            celda.title = "Este día ya ha pasado";
+        } else if (estaBloqueado) {
+            celda.classList.add("diaBloqueado");
+            celda.title = "Día bloqueado por el administrador";
+        } else if (estaOcupado) {
+            celda.classList.add("diaOcupado");
+            celda.title = "Día con todas las horas reservadas";
+        } else {
+            celda.classList.add("diaLibre");
+            celda.title = "Día disponible";
+        }
+        
+        // **NUEVA LÓGICA:** Deshabilitar el clic si el día ya pasó
+        if (diaPasado || (!modoBloqueoDias && estaBloqueado)) {
+            celda.style.pointerEvents = "none";
+        }
+
+        // Modificar el `onclick` para que solo se ejecute si no es un día pasado
+        celda.onclick = () => {
+            if (diaPasado) return; // Salir de la función si el día ya pasó
+            
+            if (modoGestionHorarios) {
+                fechaSeleccionadaParaConfigurar = fechaActual;
+                abrirVentanaConfiguracionHorarios();
+            } else if (modoBloqueoDias) {
+                if (estaBloqueado) {
+                    diasBloqueadosRef.once("value", snapshot => {
+                        snapshot.forEach(child => {
+                            if (child.val().fecha === fechaActual) {
+                                child.ref.remove();
+                            }
+                        });
+                    });
+                } else {
+                    diasBloqueadosRef.push({ fecha: fechaActual });
+                }
+            } else {
+                if (!estaBloqueado) {
+                    fechaInput.value = fechaActual;
+                    abrirVentanaHorarios(fechaActual);
+                }
+            }
+        };
+
+        cuadroCalendario.appendChild(celda);
+    }
+}
 
 const diasDeLaSemanaBloqueados = [];
 
@@ -2428,140 +2708,32 @@ setTimeout(() => {
 });
         }
 
-    function generarCuadroCalendario() {
-    const mesStr = `${fechaActualCalendario.getFullYear()}-${String(fechaActualCalendario.getMonth() + 1).padStart(2, "0")}`;
-    const cuadroCalendario = document.getElementById("cuadroCalendario");
-    cuadroCalendario.innerHTML = "";
-    const [anio, mes] = mesStr.split("-");
-    const fechaInicio = new Date(anio, mes - 1, 1);
-    const primerDiaSemana = fechaInicio.getDay();
-    const totalDias = new Date(anio, mes, 0).getDate();
-    const offset = primerDiaSemana === 0 ? 6 : primerDiaSemana - 1;
+        function abrirVentanaHorarios(fecha) {
+            tituloVentana.textContent = `HORAS DISPONIBLES ${fecha}`;
+            horariosDisponibles.innerHTML = "";
+            const horasReservadas = reservasPorDia[fecha] || [];
+            const horarioDelDia = horariosPersonalizados[fecha] || horarioSemana;
 
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    // 🕒 Horario predeterminado para martes
-    const horarioDIAESPECIAL = ["09:00", "10:00", "11:00", "12:00"];
-
-    for (let i = 0; i < offset; i++) {
-        const vacio = document.createElement("div");
-        cuadroCalendario.appendChild(vacio);
-    }
-
-    for (let dia = 1; dia <= totalDias; dia++) {
-        const fechaActual = `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
-        const celda = document.createElement("div");
-        celda.classList.add("diaCalendario");
-        celda.textContent = dia;
-
-        const fechaCelda = new Date(anio, mes - 1, dia);
-        const diaSemana = fechaCelda.getDay();
-
-        const horasReservadas = reservasPorDia[fechaActual] || [];
-
-        // 🧠 Lógica para asignar horario del día
-        let horarioDelDia;
-        if (horariosPersonalizados[fechaActual]) {
-            horarioDelDia = horariosPersonalizados[fechaActual];
-        } else if (diaSemana === 2) { // martes
-            horarioDelDia = horarioDIAESPECIAL;
-        } else {
-            horarioDelDia = horarioSemana;
-        }
-
-        const estaBloqueado = diasBloqueados.includes(fechaActual) || horarioDelDia.length === 0 || diasDeLaSemanaBloqueados.includes(diaSemana);
-        const estaOcupado = horasReservadas.length >= horarioDelDia.length;
-        const diaPasado = fechaCelda < hoy;
-
-        if (diaPasado) {
-            celda.classList.add("diaPasado");
-            celda.title = "Este día ya ha pasado";
-        } else if (estaBloqueado) {
-            celda.classList.add("diaBloqueado");
-            celda.title = "Día bloqueado por el administrador";
-        } else if (estaOcupado) {
-            celda.classList.add("diaOcupado");
-            celda.title = "Día con todas las horas reservadas";
-        } else {
-            celda.classList.add("diaLibre");
-            celda.title = "Día disponible";
-        }
-
-        if (diaPasado || (!modoBloqueoDias && estaBloqueado)) {
-            celda.style.pointerEvents = "none";
-        }
-
-        celda.onclick = () => {
-            if (diaPasado) return;
-
-            if (modoGestionHorarios) {
-                fechaSeleccionadaParaConfigurar = fechaActual;
-                abrirVentanaConfiguracionHorarios();
-            } else if (modoBloqueoDias) {
-                // Lógica de bloqueo
-            } else {
-                if (!estaBloqueado) {
-                    fechaInput.value = fechaActual;
-                    abrirVentanaHorarios(fechaActual);
+            horarioDelDia.forEach(hora => {
+                const bloque = document.createElement("div");
+                bloque.classList.add("bloqueHora");
+                if (horasReservadas.includes(hora)) {
+                    bloque.classList.add("horaOcupada");
+                    bloque.textContent = `⛔ ${hora}`;
+                } else {
+                    bloque.classList.add("horaLibre");
+                    bloque.textContent = `✅ ${hora}`;
+                    bloque.onclick = () => {
+                        document.getElementById("hora").value = hora;
+                        fechaInput.value = fecha;
+                        document.getElementById("modal-hora-personalizada").classList.remove("hidden");
+                        ventanaHorarios.style.display = "none";
+                    };
                 }
-            }
-        };
-        cuadroCalendario.appendChild(celda);
-    }
-}
-
-function abrirVentanaHorarios(fecha) {
-    tituloVentana.textContent = `HORAS DISPONIBLES ${fecha}`;
-    horariosDisponibles.innerHTML = "";
-    const horasReservadas = reservasPorDia[fecha] || [];
-
-    const horarioDIAESPECIAL = ["09:00", "10:00", "11:00", "12:00"];
-    const fechaObj = new Date(fecha);
-    const diaSemana = fechaObj.getDay(); // 0 = domingo, 1 = lunes, 2 = martes...
-
-    let horarioDelDia;
-
-    // ✅ FORZAR horarioDIAESPECIAL si es martes, ignorando Firebase
-    if (diaSemana === 1) {
-        horarioDelDia = horarioDIAESPECIAL;
-    } else if (Array.isArray(horariosPersonalizados[fecha]) && horariosPersonalizados[fecha].length > 0) {
-        horarioDelDia = horariosPersonalizados[fecha];
-    } else {
-        horarioDelDia = horarioSemana;
-    }
-
-    // 🛡️ Validación extra por si algo falla
-    if (!horarioDelDia || horarioDelDia.length === 0) {
-        horariosDisponibles.innerHTML = "<div style='padding:10px;'>No hay horas disponibles para este día.</div>";
-        return;
-    }
-
-    horarioDelDia.forEach(hora => {
-        const bloque = document.createElement("div");
-        bloque.classList.add("bloqueHora");
-        if (horasReservadas.includes(hora)) {
-            bloque.classList.add("horaOcupada");
-            bloque.textContent = `⛔ ${hora}`;
-        } else {
-            bloque.classList.add("horaLibre");
-            bloque.textContent = `✅ ${hora}`;
-            bloque.onclick = () => {
-                document.getElementById("hora").value = hora;
-                fechaInput.value = fecha;
-                document.getElementById("modal-hora-personalizada").classList.remove("hidden");
-                ventanaHorarios.style.display = "none";
-            };
+                horariosDisponibles.appendChild(bloque);
+            });
+            ventanaHorarios.style.display = "block";
         }
-        horariosDisponibles.appendChild(bloque);
-    });
-
-    ventanaHorarios.style.display = "block";
-    console.log("Horario personalizado:", horariosPersonalizados[fecha]);
-    console.log("Día de la semana:", diaSemana);
-}
-
-
 
         cerrarVentana.onclick = () => {
             ventanaHorarios.style.display = "none";
@@ -2598,12 +2770,7 @@ function abrirVentanaHorarios(fecha) {
         }
 
         function abrirVentanaConfiguracionHorarios() {
-const fechaObj = new Date(fechaSeleccionadaParaConfigurar); // ✅ sin adelantar
-
-const diaSemanaTexto = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][fechaObj.getDay()];
-document.getElementById("nombre-dia-semana").textContent = diaSemanaTexto;
-
-const diaSemana = new Date(fechaSeleccionadaParaConfigurar).getDay();
+            const diaSemana = new Date(fechaSeleccionadaParaConfigurar).getDay();
             const esSabado = diaSemana === 6;
 
             tituloConfigHorarios.textContent = `Configurar Horario (${fechaSeleccionadaParaConfigurar})`;
