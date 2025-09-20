@@ -6,10 +6,10 @@
     <title>Reservas Barbería</title>
     <link rel="stylesheet" href="styleone.css">
    
-    <link rel="icon" href="https://i.ibb.co/FbLP8vjx/logoel-a-ooriginal.jpg" type="image/x-icon">
+    <link rel="icon" href="https://i.ibb.co/5xfgvVHG/logoel-a-osinfondo.jpg" type="image/x-icon">
 <meta property="og:title" content="Barbería El ñaño">
 <meta property="og:description" content="Reservar Hora">
-<meta property="og:image" content="https://i.ibb.co/FbLP8vjx/logoel-a-ooriginal.jpg">
+<meta property="og:image" content="https://i.ibb.co/5xfgvVHG/logoel-a-osinfondo.jpg">
 <meta property="og:type" content="website">
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -32,12 +32,12 @@
 
 <!-- LOGO -->
 <!-- REMPLAZAR ESTE LINK POR EL LINK DEL LOGO: -->
-<!-- "https://i.ibb.co/FbLP8vjx/logoel-a-ooriginal.jpg" -->
+<!-- "https://i.ibb.co/5xfgvVHG/logoel-a-osinfondo.jpg" -->
 <div class="container">
         <div id="logo" style="
             width: 200px;
             height: 200px;
-            background-image: url('https://i.ibb.co/FbLP8vjx/logoel-a-ooriginal.jpg');
+            background-image: url('https://i.ibb.co/5xfgvVHG/logoel-a-osinfondo.jpg');
             background-size: cover;
             background-position: center;
             border-radius: 50%;
@@ -169,7 +169,6 @@ document.getElementById('solicitar').addEventListener('click', async () => {
 
                 const horasReservadas = reservasPorDia[fechaActual] || [];
 
-                const horarioDelDia = horariosPersonalizados[fechaActual] || horarioSemana;
 
                 const estaBloqueado = diasBloqueados.includes(fechaActual) || horarioDelDia.length === 0;
 
@@ -371,12 +370,13 @@ function mostrar(){
             <div class="caja-misteriosa">
                 <h3>ACCESO</h3>
                   <br><br>
-                <button style="background-color: green;" onclick="validarClave();ingresarllave();">Ingresar</button>
-               
+       
+                  <button onclick="cerrarModal('modal-acceso')">Cerrar</button>
                 <input type="password" id="clave-input" maxlength="4" placeholder="Clave de 4 dígitos">
                <br><br>
-                <button onclick="cerrarModal('modal-acceso')">Cerrar</button>
-            </div>
+             
+                     <button style="background-color: green;" onclick="validarClave();ingresarllave();">Ingresar</button>
+              </div>
         </div>
 <script>
     // La función que ya tienes para cerrar la modal principal
@@ -746,7 +746,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const diaSemana = fechaCelda.getDay();
 
                 const horasReservadas = reservasPorDia[fechaActual] || [];
-                const horarioDelDia = horariosPersonalizados[fechaActual] || horarioSemana;
+                
                 const estaBloqueado = diasBloqueados.includes(fechaActual) || horarioDelDia.length === 0 || diasDeLaSemanaBloqueados.includes(diaSemana);
                 const estaOcupado = horasReservadas.length >= horarioDelDia.length;
                 const diaPasado = fechaCelda < hoy;
@@ -853,17 +853,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p id="fecha-config-horarios"></p>
                 <br>
                 <div id="botones-horarios-predeterminados" style="display: flex; flex-direction: column; gap: 5px;">
-
-                    <button  id="boton-horario-sabado" style="background-color: rgb(0, 255, 0); border: 2px solid black;">Horario de Sábado</button>
+                  <button onclick="cerrarModal('modal-configuracion-horarios')">Cerrar</button>
+                                    <button  id="boton-horario-semana" style="background-color: rgb(0, 255, 0); border: 2px solid black;">Horario de Semana</button>
+                <button onclick="guardarHorarioPersonalizado()"style="background-color: green; border: 2px solid black;">Guardar Horario</button>
+                    <button  id="boton-horario-sabado" style="background-color: rgb(0, 255, 0); border: 2px solid black;" hidden>Horario de Sábado</button>
                     <button hidden id="boton-horario-cerrado">Día Cerrado</button>
                 </div>
                 <hr>
                 <div id="botones-toggle-horas" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
                 </div>
                 <br><br>
-                                    <button  id="boton-horario-semana" style="background-color: rgb(0, 255, 0); border: 2px solid black;">Horario de Semana</button>
-                <button onclick="guardarHorarioPersonalizado()"style="background-color: green; border: 2px solid black;">Guardar Horario</button>
-                <button onclick="cerrarModal('modal-configuracion-horarios')">Cerrar</button>
+
+                
             </div>
         </div>
 
@@ -886,7 +887,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div id="logo-cerrado" style="
                 width: 200px;
                 height: 200px;
-                background-image: url('https://i.ibb.co/FbLP8vjx/logoel-a-ooriginal.jpg');
+                background-image: url('https://i.ibb.co/5xfgvVHG/logoel-a-osinfondo.jpg');
                 background-size: cover;
                 background-position: center;
                 border-radius: 50%;
@@ -2192,7 +2193,7 @@ document.getElementById('reservar').addEventListener('click', async () => {
         let fechaSeleccionadaParaConfigurar = "";
 // CAMBIAR HORARIO
         const horarioSemana = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
-        const horarioSabado = ["09:00", "09:30"];
+        const horarioDomingo = ["11:30", "18:00", "18:30"];
         const bloquesBase = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
 
@@ -2238,8 +2239,35 @@ document.getElementById('reservar').addEventListener('click', async () => {
             document.getElementById("clave-input").value = '';
         }
     
+function obtenerHorario(fechaStr) {
+    const personalizado = horariosPersonalizados[fechaStr];
+    if (Array.isArray(personalizado)) return personalizado;
 
-  
+    const dia = new Date(fechaStr).getDay();
+    if (dia === 0) return horarioDomingo;
+
+    return horarioSemana;
+}
+
+  function obtenerHorarioDelDiaDesdeFecha(fechaStr) {
+    const partes = fechaStr.split("-");
+    const anio = parseInt(partes[0], 10);
+    const mes = parseInt(partes[1], 10);
+    const dia = parseInt(partes[2], 10);
+    const fechaObj = new Date(anio, mes - 1, dia);
+    const diaSemana = fechaObj.getDay();
+
+    if (horariosPersonalizados[fechaStr]) {
+        return horariosPersonalizados[fechaStr];
+    }
+
+    if (diaSemana === 0) {
+        return horarioDomingo;
+    }
+
+    return horarioSemana;
+}
+
     
      function generarCuadroCalendario() {
     const mesStr = `${fechaActualCalendario.getFullYear()}-${String(fechaActualCalendario.getMonth() + 1).padStart(2, "0")}`;
@@ -2266,7 +2294,11 @@ document.getElementById('reservar').addEventListener('click', async () => {
         celda.textContent = dia;
 
         const horasReservadas = reservasPorDia[fechaActual] || [];
-        const horarioDelDia = horariosPersonalizados[fechaActual] || horarioSemana;
+        
+        
+     const horarioDelDia = obtenerHorarioDelDiaDesdeFecha(fechaActual);
+
+
         // Dentro de la función generarCuadroCalendario()
 // ...
 
@@ -2712,7 +2744,11 @@ setTimeout(() => {
             tituloVentana.textContent = `HORAS DISPONIBLES ${fecha}`;
             horariosDisponibles.innerHTML = "";
             const horasReservadas = reservasPorDia[fecha] || [];
-            const horarioDelDia = horariosPersonalizados[fecha] || horarioSemana;
+           const diaSemana = new Date(fecha).getDay(); // 0 = Domingo
+   
+const horarioDelDia = obtenerHorarioDelDiaDesdeFecha(fecha);
+
+
 
             horarioDelDia.forEach(hora => {
                 const bloque = document.createElement("div");
@@ -2752,7 +2788,7 @@ setTimeout(() => {
                 alert("Faltan datos: asegúrate de ingresar nombre, fecha y hora");
                 return;
             }
-            const numeroDestino = "56954527837";
+            const numeroDestino = "56937463049";
             const mensaje = `Hola, soy ${nombre}. Quiero reservar para el día ${fecha} a las ${hora}.`;
             const url = `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensaje)}`;
             window.open(url, "_blank");
